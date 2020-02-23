@@ -1,0 +1,8 @@
+In UI,
+
+Conn Id: postgre_sql
+Conn Type: Postgres
+Host: localhost
+Schema: airflow_mdb
+Login: airflow
+Port: 5432
