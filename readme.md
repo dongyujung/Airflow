@@ -153,7 +153,7 @@ The first DagRun is created based on the minimum start_date of the tasks in the 
 In case start_date is earlier than actual starting date of the DAG.  
 Airflow will run past the DAGs for any intervals that has not been run.  
 Allows you to backfill DB with your data as if it was run from the past.  
-To avoid this behavior, catchup=False.  
+To avoid this behavior, `catchup=False`.  
 
 
 #### airflow.cfg parameters  
@@ -210,6 +210,8 @@ executor=SequentialExecutor
 sql_alchemy_conn=sqlite:////home/airflow/airflow/airflow.db
 # If SqlAlchemy should pool database connections
 sql_alchemy_pool_enabled=True
+broker_url = sqla+mysql://airflow:airflow@localhost:3306/airflow
+result_backend = db+mysql://airflow:airflow@localhost:3306/airflow
 ```
 
 Connection pool: maintains long running connections in memory for efficient re-use & 
@@ -256,12 +258,13 @@ parallelism == 0: unlimited parallelism. Every task submitted to the Local Execu
 will be executed in its own process.
 parallelism > 0: set to number  
 
-```
+```shell script
 executor = LocalExecutor
+result_backend = db+mysql://airflow:airflow@localhost:3306/airflow
 sql_alchemy_conn = postgresql+psycopg2://airflow@localhost:5432/airflow_mdb
 
-# Stop webserver then initiate metadata db 
-airflow initdb
+# Stop webserver then reset metadata db 
+airflow resetdb
 ```
 
 In UI, admin > connections > create, use [configurations](./config/postgres_connection) for connection.  
@@ -279,14 +282,41 @@ Data Profiling > Ad Hoc Query, choose connection, run query.
 
 ### Celery Executor with PostgreSQL and RabbitMQ  
 
-Recommended for production use of Airflow.  
-Distributes the execution of task instances to multiple worker nodes.  
-Uses a queue (RabbitMQ) to order tasks.  
-Producer: scheduler, Broker: RabbitMQ, Message: task, Consumer: Celery worker nodes  
+- Recommended for production use of Airflow.  
+- Distributes the execution of task instances to multiple worker nodes.  
+- Uses a queue (RabbitMQ) to order tasks.  
+- Producer: scheduler, Broker: RabbitMQ, Message: task, Consumer: Celery worker nodes  
 
 ![image](./images/distributed_system.png)  
 
+```shell script
+executor = CeleryExecutor
+sql_alchemy_conn = postgresql+psycopg2://airflow@localhost:5432/airflow_mdb
+broker_url = pyamqp://admin:rabbitmq@localhost/
+result_backend = db+postgresql://airflow@localhost:5432/airflow_mdb
+worker_log_server_port = 8794
 
+# Stop webserver then initiate metadata db 
+airflow resetdb
+```
 
+```shell script
+# Run a celery worker
+airflow worker
+```
 
+Parent process: manage running tasks.  
+Sending/receiving queue messages, track status, register, kill tasks, etc.  
+Spawns N child worker processes that execute tasks.  
+
+Setting number of child worker processes:  
+```shell script
+airflow worker -c 2
+# or in airflow.cfg
+worker_concurrency = 2
+```
+
+RabbitMQ UI port: 15672  
+
+Admin > Connections > Create  
 
