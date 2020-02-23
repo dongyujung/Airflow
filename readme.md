@@ -315,8 +315,20 @@ airflow worker -c 2
 # or in airflow.cfg
 worker_concurrency = 2
 ```
-
 RabbitMQ UI port: 15672  
 
-Admin > Connections > Create  
+
+## Minimizing Repetitive patterns with SubDAGs  
+
+- To create a subDAG, use factory function that returns a DAG object and 
+the SubDagOperator to attach the subDAG to the main DAG.  
+- The factory function returns an instantiated DAG with the associate tasks. 
+The function should be in a different file from where the main DAG is stored.
+- SubDags must be scheduled the same as their parent DAG.    
+
+Example of main DAG file: [subdag_dag.py](./dags/subdag_dag.py)  
+Example of SubDAG file: [subdag_factory.py](./dags/subdag_factory.py)  
+
+
+
 
