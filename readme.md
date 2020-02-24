@@ -329,6 +329,51 @@ The function should be in a different file from where the main DAG is stored.
 Example of main DAG file: [subdag_dag.py](./dags/subdag_dag.py)  
 Example of SubDAG file: [subdag_factory.py](./dags/subdag_factory.py)  
 
+## Interact with External Sources Using Hooks  
+
+#### Hook  
+
+Interface to interact with external systems such as Hive, PostgreSQL, 
+Spark, SFTP, etc.  
+
+E.g., PostgreOperator uses PostgreHook to interact with PostgreSQL. It handles 
+the connection and allows you to execute SQL like on command line interface.  
+
+`schema` parameter corresponds to the name of database.  
+
+Example DAG: [hook_dag.py](./dags/hook_dag.py)  
+
+## Sharing Data between Tasks with XCOMs  
+
+- Stands for "cross-communication".  
+- XCOMs are used to share key-value information between tasks.  
+- Consists of key, value, and timestamp.  
+- Stored in metadata db with execution_date, task_id, and dag_id.  
+
+XCOMs can be **pushed** (sent) or **pulled** (received).  
+
+Push  
+- Can push using `xcom_push()`.  
+- If task returns a value (either through operator's execute() method or python function), 
+a XCOM containing that value is automatically pushed.   
+
+Pull  
+- Tasks receive messanges through `xcom_pull()` based on parameters 
+`key`, `task_ids`, and `dag_id`.  
+
+Notes  
+- XCOMs can be used to share any serializable object.  
+- Some operators such as BashOperator and SimpleHTTPOperator has `xcom_push=False` 
+as default.  
+- `execution_date` in XCOM means hide key value until this date.  
+- When there are two XCOMs with same key, dag id, and task id, the XCOM with 
+the most recent `execution_date` will be used.  
+- If `execution_date` was not set, same date as `execution_date` of the DagRun.  
 
 
+
+
+
+
+ 
 
